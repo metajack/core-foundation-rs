@@ -1,4 +1,4 @@
-use libc::c_long;
+use core::libc::c_long;
 
 // a raw Core Foundation reference. It may or may not have been
 // CFRetain'ed, depending on whether it was obtained via ownership or
@@ -34,7 +34,7 @@ struct __CFType { private: () }
 pub type CFTypeRef = *__CFType;
 
 
-pub impl AbstractCFTypeRef for CFTypeRef {
+impl AbstractCFTypeRef for CFTypeRef {
     pure fn as_type_ref(&self) -> CFTypeRef { *self }
     // this can't be used, because CFType is the supertype and has no type id.
     static pure fn type_id() -> CFTypeID { fail!(); }
@@ -42,7 +42,7 @@ pub impl AbstractCFTypeRef for CFTypeRef {
 
 pub pure fn downcast<T:AbstractCFTypeRef>(r: CFTypeRef) -> T {
     unsafe {
-        assert CFGetTypeID(r) == AbstractCFTypeRef::type_id::<T>();
+        fail_unless!(CFGetTypeID(r) == AbstractCFTypeRef::type_id::<T>());
         cast::transmute(r)
     }
 }
@@ -60,7 +60,7 @@ pub struct CFWrapper<T, PlaceholderType1, PlaceholderType2> {
             // cannot make virtual method calls using trait
             // types. Instead, just transmute the bugger.
             let this: &RawCFWrapper = cast::transmute(&self);
-            assert CFGetRetainCount(this.obj) > 0 as CFIndex;
+            fail_unless!(CFGetRetainCount(this.obj) > 0 as CFIndex);
             CFRelease(this.obj)
         }
     }
@@ -68,7 +68,7 @@ pub struct CFWrapper<T, PlaceholderType1, PlaceholderType2> {
 
 pub type CFType = CFWrapper<CFTypeRef, (), ()>;
 
-pub impl<T:Copy + AbstractCFTypeRef, E1, E2> CFWrapper<T, E1, E2> {
+impl<T:Copy + AbstractCFTypeRef, E1, E2> CFWrapper<T, E1, E2> {
     pure fn borrow_ref(&self) -> &self/T {
         &self.obj
     }
@@ -108,7 +108,7 @@ pub impl<T:Copy + AbstractCFTypeRef, E1, E2> CFWrapper<T, E1, E2> {
 
     static fn from_CFType(wrapper: CFType) -> CFWrapper<T,E1,E2> {
         unsafe {
-            assert wrapper.type_id() == AbstractCFTypeRef::type_id::<T>();
+            fail_unless!(wrapper.type_id() == AbstractCFTypeRef::type_id::<T>());
             cast::transmute(wrapper)
         }
     }

@@ -8,8 +8,8 @@ use base::{
     CFWrapper,
     kCFAllocatorDefault
 };
-use base;
-use libc::{c_int, c_void};
+
+use core::libc::{c_int, c_void};
 
 pub type CFNumberType = u32;
 
@@ -35,7 +35,7 @@ const kCFNumberMaxType:       CFNumberType = 16;
 struct __CFNumber { private: () }
 pub type CFNumberRef = *__CFNumber;
 
-pub impl AbstractCFTypeRef for CFNumberRef {
+impl AbstractCFTypeRef for CFNumberRef {
     pure fn as_type_ref(&self) -> CFTypeRef { *self as CFTypeRef }
 
     static pure fn type_id() -> CFTypeID {
@@ -47,7 +47,7 @@ pub impl AbstractCFTypeRef for CFNumberRef {
 
 pub type CFNumber = CFWrapper<CFNumberRef, (), ()>;
 
-pub impl CFNumber {
+impl CFNumber {
     static fn new<T:Copy + ConvertibleToCFNumber>(n: T) -> CFNumber {
         unsafe {
             let objref = CFNumberCreate(kCFAllocatorDefault,
@@ -59,7 +59,7 @@ pub impl CFNumber {
 
     pure fn to_i8() -> i8 {
         let ty = kCFNumberSInt8Type;
-        assert self.has_number_type(ty);
+        fail_unless!(self.has_number_type(ty));
         unsafe {
             let val: i8 = 0i8;
             if !CFNumberGetValue(self.obj, ty, cast::transmute(&val)) {
@@ -71,7 +71,7 @@ pub impl CFNumber {
 
     pure fn to_i16() -> i16 {
         let ty = kCFNumberSInt16Type;
-        assert self.has_number_type(ty);
+        fail_unless!(self.has_number_type(ty));
         unsafe {
             let val: i16 = 0i16;
             if !CFNumberGetValue(self.obj, ty, cast::transmute(&val)) {
@@ -83,7 +83,7 @@ pub impl CFNumber {
 
     pure fn to_i32() -> i32 {
         let ty = kCFNumberSInt32Type;
-        assert self.has_number_type(ty);
+        fail_unless!(self.has_number_type(ty));
         unsafe {
             let val: i32 = 0i32;
             if !CFNumberGetValue(self.obj, ty, cast::transmute(&val)) {
@@ -95,7 +95,7 @@ pub impl CFNumber {
 
     pure fn to_float() -> float {
         unsafe {
-            assert self.has_float_type();
+            fail_unless!(self.has_float_type());
             let ty = CFNumberGetType(self.obj);
             if ty == kCFNumberFloat32Type || ty == kCFNumberFloatType {
                 let mut val: libc::c_float = 0.0f as libc::c_float;

@@ -8,7 +8,7 @@ use base::{
     CFWrapper,
     kCFAllocatorDefault,
 };
-use libc::c_void;
+use core::libc::c_void;
 
 pub type CFArrayRetainCallBack = *u8;
 pub type CFArrayReleaseCallBack = *u8;
@@ -26,14 +26,14 @@ pub struct CFArrayCallBacks {
 struct __CFArray { private: () }
 pub type CFArrayRef = *__CFArray;
 
-pub impl AbstractCFTypeRef for CFArrayRef {
+impl AbstractCFTypeRef for CFArrayRef {
     pure fn as_type_ref(&self) -> CFTypeRef { *self as CFTypeRef }
     static pure fn type_id() -> CFTypeID { unsafe { CFArrayGetTypeID() } }
 }
 
 pub type CFArray<ElemRefType> = CFWrapper<CFArrayRef, ElemRefType, ()>;
 
-pub impl<ElemRefType:AbstractCFTypeRef> CFArray<ElemRefType> {
+impl<ElemRefType:AbstractCFTypeRef> CFArray<ElemRefType> {
     static fn new(elems: &[ElemRefType]) -> CFArray<ElemRefType> {
         let array_ref: CFArrayRef;
         let elems_refs = do vec::map(elems) |e: &ElemRefType| { e.as_type_ref() };
@@ -48,25 +48,25 @@ pub impl<ElemRefType:AbstractCFTypeRef> CFArray<ElemRefType> {
         CFWrapper::wrap_owned(array_ref)
     }
 
-    pub fn each_ref<A>(cb: fn&(ElemRefType) -> A) {
+    pub fn each_ref<A>(&self, cb: &fn(ElemRefType) -> A) {
         for uint::range(0, self.len()) |i| { cb(self[i]); }
     }
 
-    pub fn eachi_ref<A>(cb: fn&(uint, ElemRefType) -> A) {
+    pub fn eachi_ref<A>(&self, cb: &fn(uint, ElemRefType) -> A) {
         for uint::range(0, self.len()) |i| { cb(i, self[i]); }
     }
 
     // Careful; the callback must wrap the reference properly.
     // Generally, when array elements are Core Foundation objects (not
     // always true), they need to be wrapped with CFWrapper::wrap_shared.
-    pub fn each<A>(cb: fn&(&ElemRefType) -> A) {
+    pub fn each<A>(&self, cb: &fn(&ElemRefType) -> A) {
         for uint::range(0, self.len()) |i| { cb(&self[i]); }
     }
 
     // Careful; the callback must wrap the reference properly.
     // Generally, when array elements are Core Foundation objects (not
     // always true), they need to be wrapped with CFWrapper::wrap_shared.
-    pub fn eachi<A>(cb: fn&(uint, &ElemRefType) -> A) {
+    pub fn eachi<A>(cb: &fn(uint, &ElemRefType) -> A) {
         for uint::range(0, self.len()) |i| { cb(i, &self[i]); }
     }
 
@@ -78,7 +78,7 @@ pub impl<ElemRefType:AbstractCFTypeRef> CFArray<ElemRefType> {
     // Generally, when array elements are Core Foundation objects (not
     // always true), they need to be wrapped with CFWrapper::wrap_shared.
     pure fn index(idx: uint) -> ElemRefType {
-        assert idx < self.len();
+        fail_unless!(idx < self.len());
         unsafe { 
             let elem = CFArrayGetValueAtIndex(*self.borrow_ref(), idx as CFIndex);
             // Don't return a wrapped thing, since we don't know whether
@@ -134,11 +134,11 @@ fn should_box_and_unbox() {
         sum += CFWrapper::wrap_shared(*elem).to_i32();
     }
 
-    assert sum == 15;
+    fail_unless!(sum == 15);
 
     for arr.each |elem: &CFNumberRef| {
         sum += CFWrapper::wrap_shared(*elem).to_i32();
     }
 
-    assert sum == 30;
+    fail_unless!(sum == 30);
 }

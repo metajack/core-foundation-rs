@@ -30,7 +30,7 @@ impl AbstractCFTypeRef for CFURLRef {
 
 pub type CFURL = CFWrapper<CFURLRef, (), ()>;
 
-pub impl ToStr for CFURL {
+impl ToStr for CFURL {
     pure fn to_str(&self) -> ~str {
         unsafe {
             let cfstr: CFString = CFWrapper::wrap_shared(CFURLGetString(self.obj));

@@ -8,7 +8,7 @@ use base::{
     CFWrapper,
     kCFAllocatorDefault,
 };
-use libc::{c_char, c_void};
+use core::libc::{c_char, c_void};
 
 pub type CFSetRetainCallBack = *u8;
 pub type CFSetReleaseCallBack = *u8;
@@ -40,7 +40,7 @@ impl AbstractCFTypeRef for CFSetRef {
 
 pub type CFSet<ElemRefType> = CFWrapper<CFSetRef, ElemRefType, ()>;
 
-pub impl<ElemRefType : AbstractCFTypeRef>
+impl<ElemRefType : AbstractCFTypeRef>
     CFSet<ElemRefType> {
     static fn new(elems: &[ElemRefType]) -> CFSet<ElemRefType> {
         let result : CFSetRef;

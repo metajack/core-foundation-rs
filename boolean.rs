@@ -10,7 +10,7 @@ pub type Boolean = u32;
 struct __CFBoolean { private: () }
 pub type CFBooleanRef = *__CFBoolean;
 
-pub impl AbstractCFTypeRef for CFBooleanRef {
+impl AbstractCFTypeRef for CFBooleanRef {
     pure fn as_type_ref(&self) -> CFTypeRef { *self as CFTypeRef }
 
     static pure fn type_id() -> CFTypeID {
@@ -20,7 +20,7 @@ pub impl AbstractCFTypeRef for CFBooleanRef {
 
 pub type CFBoolean = CFWrapper<CFBooleanRef, (), ()>;
 
-pub impl CFBoolean {
+impl CFBoolean {
     static fn true_value() -> CFBoolean {
         CFWrapper::wrap_shared(kCFBooleanTrue)
     }

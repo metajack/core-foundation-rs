@@ -11,8 +11,7 @@ use base::{
 };
 use string::{CFString, CFStringRef};
 
-use dvec::DVec;
-use libc::c_void;
+use core::libc::c_void;
 
 pub type CFDictionaryApplierFunction = *u8;
 pub type CFDictionaryCopyDescriptionCallBack = *u8;
@@ -54,11 +53,12 @@ impl AbstractCFTypeRef for CFDictionaryRef {
 pub type CFDictionary<KeyRefType, ValueRefType> = CFWrapper<CFDictionaryRef, KeyRefType, ValueRefType>;
 pub type UntypedCFDictionary = CFDictionary<CFStringRef, CFTypeRef>;
 
-pub impl<KeyRefType: Copy + AbstractCFTypeRef, ValueRefType: Copy + AbstractCFTypeRef>
+impl<KeyRefType: Copy + AbstractCFTypeRef, ValueRefType: Copy + AbstractCFTypeRef>
     CFDictionary<KeyRefType, ValueRefType> {
 
     static fn new(pairs: &[(KeyRefType,ValueRefType)]) -> CFDictionary<KeyRefType, ValueRefType> {
-        let (keys, values) = (DVec(), DVec());
+        let mut keys : ~[CFTypeRef] = ~[];
+        let mut values : ~[CFTypeRef] = ~[];
         for pairs.each |pair| {
             // FIXME: "let" would be much nicer here, but that doesn't work yet.
             match *pair {
@@ -69,9 +69,7 @@ pub impl<KeyRefType: Copy + AbstractCFTypeRef, ValueRefType: Copy + AbstractCFTy
             }
         }
 
-        assert keys.len() == values.len();
-        let keys = dvec::unwrap(keys);
-        let values = dvec::unwrap(values);
+        fail_unless!(keys.len() == values.len());
 
         let dictionary_ref : CFDictionaryRef;
         unsafe {
@@ -87,8 +85,8 @@ pub impl<KeyRefType: Copy + AbstractCFTypeRef, ValueRefType: Copy + AbstractCFTy
     }
 }
 
-pub impl<KeyRefType   : AbstractCFTypeRef + Copy,
-         ValueRefType : AbstractCFTypeRef + Copy>
+impl<KeyRefType   : AbstractCFTypeRef + Copy,
+     ValueRefType : AbstractCFTypeRef + Copy>
     CFDictionary<KeyRefType, ValueRefType> {
     pure fn len() -> uint {
         unsafe {
@@ -129,7 +127,7 @@ pub impl<KeyRefType   : AbstractCFTypeRef + Copy,
         return option::unwrap(value);
     }
 
-    fn each(blk: fn&(&KeyRefType, &ValueRefType) -> bool) {
+    fn each(blk: &fn(&KeyRefType, &ValueRefType) -> bool) {
         unsafe {
             let len = self.len();
             let null_keys = cast::transmute::<*c_void,KeyRefType>(ptr::null());

@@ -14,8 +14,6 @@ use base::{
     kCFAllocatorNull,
 };
 
-use libc::c_char;
-
 pub type UniChar = libc::c_ushort;
 
 /*
@@ -198,7 +196,7 @@ struct __CFString { private: () }
 
 pub type CFStringRef = *__CFString;
 
-pub impl AbstractCFTypeRef for CFStringRef {
+impl AbstractCFTypeRef for CFStringRef {
     pure fn as_type_ref(&self) -> CFTypeRef { *self as CFTypeRef }
 
     static pure fn type_id() -> CFTypeID {
@@ -210,7 +208,7 @@ pub impl AbstractCFTypeRef for CFStringRef {
 
 pub type CFString = CFWrapper<CFStringRef, (), ()>;
 
-pub impl CFString {
+impl CFString {
     // convenience method to make it easier to wrap extern
     // CFStringRefs without providing explicit typarams to base::wrap()
     static fn wrap_extern(string: CFStringRef) -> CFString {
@@ -256,7 +254,7 @@ pub impl CFString {
     
 }
 
-pub impl ToStr for CFString {
+impl ToStr for CFString {
     pure fn to_str(&self) -> ~str {
         unsafe {
             let char_len = self.char_len();
@@ -285,10 +283,10 @@ pub impl ToStr for CFString {
                                                  buffer.len() as CFIndex,
                                                  ptr::to_unsafe_ptr(&bytes_used)) as uint;
 
-            assert chars_written == char_len;
+            fail_unless!(chars_written == char_len);
             // this is dangerous; we over-allocate and nul-terminate the string (during
             // initialization)
-            assert bytes_used + 1 == buffer.len() as CFIndex;
+            fail_unless!(bytes_used + 1 == buffer.len() as CFIndex);
             // then, reinterpret it as as string. you have been warned!
             let casted_str : ~str = cast::transmute(buffer);
             // sanity check.
@@ -416,5 +414,5 @@ fn string_and_back() {
     let original = "The quick brown fox jumped over the slow lazy dog.";
     let cfstr = CFString::new_static(original);
     let converted = cfstr.to_str();
-    assert original == converted;
+    fail_unless!(original == converted);
 }

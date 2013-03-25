@@ -26,7 +26,7 @@ impl AbstractCFTypeRef for CFDataRef {
 
 type CFData = CFWrapper<CFDataRef, (), ()>;
 
-pub impl CFData {
+impl CFData {
     static fn new_from_buf(buf: &[u8]) -> CFData {
         let result;
         unsafe {
@@ -56,7 +56,7 @@ pub impl CFData {
         }
     }
 
-    fn with_buf<U>(blk: fn&(v: &[u8]) -> U) -> U {
+    fn with_buf<U>(blk: &fn(v: &[u8]) -> U) -> U {
         unsafe {
             vec::raw::buf_as_slice(self.bytes(), self.len(), blk)
         }
