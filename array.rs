@@ -27,14 +27,14 @@ struct __CFArray { private: () }
 pub type CFArrayRef = *__CFArray;
 
 impl AbstractCFTypeRef for CFArrayRef {
-    pure fn as_type_ref(&self) -> CFTypeRef { *self as CFTypeRef }
-    static pure fn type_id() -> CFTypeID { unsafe { CFArrayGetTypeID() } }
+    fn as_type_ref(&self) -> CFTypeRef { *self as CFTypeRef }
+    fn type_id() -> CFTypeID { unsafe { CFArrayGetTypeID() } }
 }
 
 pub type CFArray<ElemRefType> = CFWrapper<CFArrayRef, ElemRefType, ()>;
 
-impl<ElemRefType:AbstractCFTypeRef> CFArray<ElemRefType> {
-    static fn new(elems: &[ElemRefType]) -> CFArray<ElemRefType> {
+pub impl<ElemRefType:AbstractCFTypeRef> CFArray<ElemRefType> {
+    fn new(elems: &[ElemRefType]) -> CFArray<ElemRefType> {
         let array_ref: CFArrayRef;
         let elems_refs = do vec::map(elems) |e: &ElemRefType| { e.as_type_ref() };
 
@@ -66,18 +66,20 @@ impl<ElemRefType:AbstractCFTypeRef> CFArray<ElemRefType> {
     // Careful; the callback must wrap the reference properly.
     // Generally, when array elements are Core Foundation objects (not
     // always true), they need to be wrapped with CFWrapper::wrap_shared.
-    pub fn eachi<A>(cb: &fn(uint, &ElemRefType) -> A) {
+    pub fn eachi<A>(&self, cb: &fn(uint, &ElemRefType) -> A) {
         for uint::range(0, self.len()) |i| { cb(i, &self[i]); }
     }
 
-    pub pure fn len() -> uint {
+    pub fn len(&self) -> uint {
         unsafe { return CFArrayGetCount(*self.borrow_ref()) as uint; }
     }
+}
 
+impl<ElemRefType:AbstractCFTypeRef> Index<uint,ElemRefType> for CFArray<ElemRefType> {
     // Careful; the caller must wrap any returned reference properly.
     // Generally, when array elements are Core Foundation objects (not
     // always true), they need to be wrapped with CFWrapper::wrap_shared.
-    pure fn index(idx: uint) -> ElemRefType {
+    fn index(&self, idx: uint) -> ElemRefType {
         fail_unless!(idx < self.len());
         unsafe { 
             let elem = CFArrayGetValueAtIndex(*self.borrow_ref(), idx as CFIndex);
@@ -94,7 +96,7 @@ extern {
     /*
      * CFArray.h
      */
-    const kCFTypeArrayCallBacks: CFArrayCallBacks;
+    static kCFTypeArrayCallBacks: CFArrayCallBacks;
 
     fn CFArrayCreate(allocator: CFAllocatorRef, values: **c_void,
                      numValues: CFIndex, callBacks: *CFArrayCallBacks) -> CFArrayRef;
