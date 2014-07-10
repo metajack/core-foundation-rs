@@ -8,4 +8,4 @@
 *.dSYM
 *.so
 *.dll
-core_foundation-test
+/core_foundation-test
