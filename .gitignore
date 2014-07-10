@@ -5,4 +5,7 @@
 /*.cmake-trigger
 *.rlib
 *.dylib
+*.dSYM
 *.so
+*.dll
+core_foundation-test
